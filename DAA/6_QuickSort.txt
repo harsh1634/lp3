@@ -1,0 +1,42 @@
+array = [1,2,3,4,5,6]
+
+# T.C : o(n^2)
+def quick_sort_deterministic(arr):
+    print("-------------------")
+    # Base case: if the array has 1 or 0 elements, it's already sorted
+    if len(arr) <= 1:
+        return arr
+    # Choose the first element as the pivot
+    pivot = arr[0]  
+    # Partition the array into left and right sub-arrays
+    left = [x for x in arr[1:] if x < pivot]
+    right = [x for x in arr[1:] if x >= pivot]
+    print(f"left array: {left} \nright array: {right}")
+    # Recursively sort the left and right sub-arrays and combine them with the pivot
+    return quick_sort_deterministic(left) + [pivot] + quick_sort_deterministic(right)
+
+# Sorting using Deterministic Quick Sort
+sorted_array_deterministic = quick_sort_deterministic(array)
+print("Sorted array (Deterministic Quick Sort):", sorted_array_deterministic)
+
+# T.C : O(nlogn)
+def quick_sort_randomized(arr):
+    print("-------------------")
+    # Base case: if the array has 1 or 0 elements, it's already sorted
+    if len(arr) <= 1:
+        return arr
+    # Randomly select a pivot index from the array
+    pivot_index = random.randint(0, len(arr) - 1)
+    pivot = arr[pivot_index]
+    # Move the pivot to the end of the array for partitioning
+    arr[pivot_index], arr[-1] = arr[-1], arr[pivot_index]
+    # Partition the array into left and right sub-arrays
+    left = [x for x in arr[:-1] if x < pivot]
+    right = [x for x in arr[:-1] if x >= pivot]
+    print(f"left array: {left} \nright array: {right}")
+    # Recursively sort the left and right sub-arrays and combine them with the pivot
+    return quick_sort_randomized(left) + [pivot] + quick_sort_randomized(right)
+
+# Sorting using Randomized Quick Sort
+sorted_array_randomized = quick_sort_randomized(array)
+print("Sorted array (Randomized Quick Sort):", sorted_array_randomized)

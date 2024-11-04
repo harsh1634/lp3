@@ -1,0 +1,20 @@
+def main():
+    n1, n2 = 0, 1
+    
+    # Ask user for number of elements
+    number = int(input("Enter the number of elements: "))
+    
+    # Print the first two Fibonacci numbers (0 and 1)
+    print(n1, n2, end=" ")
+    
+    # Start loop from 2 as 0 and 1 are already printed
+    for i in range(2, number):
+        n3 = n1 + n2  # Calculate the next number in series
+        print(n3, end=" ")  # Print the next number
+        n1, n2 = n2, n3  # Shift n1 to n2 and n2 to n3
+
+if __name__ == "__main__":
+    main()
+
+#step count = 'n' (n>=2)
+#T.C = O(n)

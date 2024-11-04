@@ -1,0 +1,84 @@
+import heapq
+
+class Node:
+    def __init__(self, level, profit, weight, bound):
+        self.level = level       # Level of node in the decision tree
+        self.profit = profit     # Current profit at this node
+        self.weight = weight     # Current weight at this node
+        self.bound = bound       # Upper bound of profit in this subtree
+
+    # Comparator for priority queue, to create a max-heap by bound value
+    def __lt__(self, other):
+        return self.bound > other.bound  # Max-heap behavior
+
+def calculate_bound(node, n, W, weights, profits):
+    # If the node's weight exceeds the maximum weight, return 0 (invalid bound)
+    if node.weight >= W:
+        return 0
+
+    profit_bound = node.profit
+    j = node.level + 1
+    total_weight = node.weight
+
+    # Calculate bound by including items starting from the current level
+    while j < n and total_weight + weights[j] <= W:
+        total_weight += weights[j]
+        profit_bound += profits[j]
+        j += 1
+
+    # If there's still capacity left, add fraction of the next item's profit
+    if j < n:
+        profit_bound += (W - total_weight) * (profits[j] / weights[j])
+
+    return profit_bound
+
+def knapsack_branch_and_bound(profits, weights, W):
+    n = len(profits)
+    # Sort items by value-to-weight ratio in descending order
+    items = sorted(range(n), key=lambda i: profits[i] / weights[i], reverse=True)
+    profits = [profits[i] for i in items]
+    weights = [weights[i] for i in items]
+
+    max_profit = 0  # Initialize max profit
+    priority_queue = []  # Priority queue for branch and bound
+
+    # Start with a dummy node
+    v = Node(level=-1, profit=0, weight=0, bound=0)
+    v.bound = calculate_bound(v, n, W, weights, profits)
+    heapq.heappush(priority_queue, v)
+
+    while priority_queue:
+        # Remove the node with the highest bound
+        v = heapq.heappop(priority_queue)
+
+        # If it's promising and we haven't reached the last item
+        if v.bound > max_profit and v.level < n - 1:
+            # Explore the left child (include the next item)
+            u = Node(level=v.level + 1,
+                     profit=v.profit + profits[v.level + 1],
+                     weight=v.weight + weights[v.level + 1],
+                     bound=0)
+            if u.weight <= W and u.profit > max_profit:
+                max_profit = u.profit
+            u.bound = calculate_bound(u, n, W, weights, profits)
+            if u.bound > max_profit:
+                heapq.heappush(priority_queue, u)
+
+            # Explore the right child (exclude the next item)
+            u = Node(level=v.level + 1,
+                     profit=v.profit,
+                     weight=v.weight,
+                     bound=0)
+            u.bound = calculate_bound(u, n, W, weights, profits)
+            if u.bound > max_profit:
+                heapq.heappush(priority_queue, u)
+
+    return max_profit
+
+# Example usage
+profits = [10,10,12,18]
+weights = [2,4,6,9]
+W = 15
+
+max_profit = knapsack_branch_and_bound(profits, weights, W)
+print("Maximum profit:", max_profit)

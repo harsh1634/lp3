@@ -1,0 +1,39 @@
+# T.C: O(m*n) m=max_wt n=no of items
+def knapsack(values, weights, max_weight):
+    n = len(values)
+    # Initialize the dp table with zero values
+    dp = [[0 for _ in range(max_weight + 1)] for _ in range(n + 1)]
+    
+    # Build the dp table
+    for i in range(1, n + 1):
+        for w in range(1, max_weight + 1):
+            if weights[i-1] <= w:
+                # Include the item or exclude it, whichever gives a higher value
+                dp[i][w] = max(dp[i-1][w], dp[i-1][w - weights[i-1]] + values[i-1])
+            else:
+                # Cannot include the item, so the value is the same as without it
+                dp[i][w] = dp[i-1][w]
+                
+    # The maximum value is in dp[n][max_weight]
+    return dp[n][max_weight]
+
+# Taking inputs from the user
+num_items = int(input("Enter the number of items: "))
+values = []
+weights = []
+
+print("Enter the values of the items:")
+for i in range(num_items):
+    value = int(input(f"Value of item {i + 1}: "))
+    values.append(value)
+
+print("Enter the weights of the items:")
+for i in range(num_items):
+    weight = int(input(f"Weight of item {i + 1}: "))
+    weights.append(weight)
+
+max_weight = int(input("Enter the maximum weight capacity of the knapsack: "))
+
+# Solving the 0-1 Knapsack problem
+max_value = knapsack(values, weights, max_weight)
+print("The maximum value achievable is:", max_value)
