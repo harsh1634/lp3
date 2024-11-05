@@ -1,0 +1,170 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+
+#Load and inspect dataset
+df = pd.read_csv('uber.csv')
+df.info()
+
+#Preprocess dataset
+df.shape
+
+df.head()
+
+#Drop unnecessary columns
+df.drop(columns=["Unnamed: 0", "key"], inplace=True)
+df.head()
+
+#count missin g values per column
+df.isnull().sum()
+
+#fill missing values with mean
+df['dropoff_latitude'].fillna(value=df['dropoff_latitude'].mean(),inplace=True)
+df['dropoff_longitude'].fillna(value=df['dropoff_longitude'].mean(),inplace=True)
+
+df.dtypes
+
+#Convert pickup datetime to DateTime format
+df.pickup_datetime = pd.to_datetime(df.pickup_datetime)
+df.dtypes
+
+#Extract date components
+df = df.assign(
+    hour = df.pickup_datetime.dt.hour,
+    day = df.pickup_datetime.dt.day,
+    month = df.pickup_datetime.dt.month,
+    year = df.pickup_datetime.dt.year,
+    dayofweek = df.pickup_datetime.dt.dayofweek
+)
+df
+
+df= df.drop(["pickup_datetime"], axis=1)
+df
+
+#Define haversine distance function
+from math import *
+def distance_formula(longitude1, latitude1, longitude2, latitude2):
+    travel_dist = []
+    for pos in range(len(longitude1)):
+        lon1, lan1, lon2, lan2 = map(radians, [longitude1[pos], latitude1[pos], longitude2[pos], latitude2[pos]])
+        dist_lon = lon2 - lon1
+        dist_lan = lan2 - lan1
+        a = sin(dist_lan/2)**2 + cos(lan1) * cos(lan2) * sin(dist_lon/2)**2
+        c = 2 * asin(sqrt(a)) * 6371
+        travel_dist.append(c)
+    return travel_dist
+
+
+df['dist_travel_km'] = distance_formula(df.pickup_longitude.to_numpy(), df.pickup_latitude.to_numpy(), df.dropoff_longitude.to_numpy(), df.dropoff_latitude.to_numpy())
+
+#Plot boxplots for finding outliers
+df.plot(kind = "box", subplots = True, layout = (6,2), figsize = (25,20))
+plt.show()
+
+def remove_outlier(df1, col):
+    Q1 = df1[col].quantile(0.25)
+    Q3 = df1[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_whisker = Q1 - 1.5 * IQR
+    upper_whisker = Q3 + 1.5 * IQR
+    df[col] = np.clip(df1[col], lower_whisker, upper_whisker)
+    return df1
+
+def treat_outliers_all(df1, col_list):
+    for c in col_list:
+        df1 = remove_outlier(df, c)
+    return df1
+	
+df = treat_outliers_all(df, df.iloc[:,0::])
+
+#re-plot box plots after treating outliers
+df.plot(kind = "box", subplots = True, layout = (6,2), figsize = (25,20))
+plt.show()
+
+# To check correlation
+corr = df.corr()
+corr
+
+fig, axis = plt.subplots(figsize = (10,6))
+sns.heatmap(df.corr(), annot = True)
+
+#Split features and target variables
+df_x = df[['passenger_count', 'hour', 'day', 'month', 'year', 'dayofweek', 'dist_travel_km']]
+df_y = df['fare_amount']
+
+x_train, x_test, y_train, y_test = train_test_split(df_x, df_y, test_size = 0.2)
+
+from sklearn.linear_model import LinearRegression
+# Initialize the linear regression model
+reg = LinearRegression()
+# Train the model with our training data
+reg.fit(x_train, y_train)
+
+y_pred_lin = reg.predict(x_test)
+print(y_pred_lin)
+
+from sklearn.ensemble import RandomForestRegressor
+# Here n_estimators means number of trees you want to build before making the prediction
+rf = RandomForestRegressor(n_estimators = 100)
+rf.fit(x_train, y_train)
+
+y_pred_rf = rf.predict(x_test)
+print(y_pred_rf)
+
+cols = ['Model', 'RMSE', 'R-Squared']
+
+# Create a empty dataframe of the colums
+# Columns: specifies the columns to be selected
+result_tabulation = pd.DataFrame(columns = cols)
+
+#Calculate metrics for linear regression
+from sklearn import metrics
+from sklearn.metrics import r2_score
+reg_RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred_lin))
+reg_squared = r2_score(y_test, y_pred_lin)
+full_metrics = pd.Series({'Model': "Linear Regression", 'RMSE' : reg_RMSE, 'R-Squared' : reg_squared})
+full_metrics
+
+#Calculate metrics for random forest
+rf_RMSE = np.sqrt(metrics.mean_squared_error(y_test, y_pred_rf))
+rf_squared = r2_score(y_test, y_pred_rf)
+full_metrics = pd.Series({'Model': "Random Forest ", 'RMSE': rf_RMSE, 'R-Squared': rf_squared})
+full_metrics
+
+
+# Theory
+### Linear Regression: Overview
+
+Linear regression is a statistical method used to model the relationship between a dependent variable (target) and one or more independent variables (predictors). The goal is to fit a linear equation to the data, where the equation typically takes the form:
+
+y=β0+β1x1+β2x2+⋯+βnxn+ϵ
+
+- **y**: Dependent variable (target)
+- **x_1, x_2, ..., x_n**: Independent variables (features)
+- **β₀**: Intercept (constant term)
+- **β₁, β₂, ..., βn**: Coefficients of the independent variables (weights)
+- **ε**: Error term (residuals)
+
+The coefficients (β's) are estimated using methods like **Ordinary Least Squares (OLS)** to minimize the difference between the observed and predicted values.
+
+---
+
+### Advantages of Linear Regression:
+1. **Simplicity and Interpretability**: The model is easy to understand and interpret, making it suitable for explaining the relationship between variables.
+2. **Efficient**: It can be computed quickly and is computationally inexpensive, even for large datasets.
+3. **Works well with linear relationships**: If the relationship between the variables is linear, it produces reliable predictions.
+4. **Basis for other models**: It serves as the foundation for more complex models (e.g., multiple regression, regularized regression).
+5. **Transparency**: The coefficients provide clear insights into how each feature affects the target variable.
+
+---
+
+### Disadvantages of Linear Regression:
+1. **Assumption of Linearity**: It assumes a linear relationship between the dependent and independent variables, which may not hold in complex real-world data.
+2. **Sensitive to Outliers**: Outliers can heavily influence the model’s coefficients, leading to inaccurate predictions.
+3. **Multicollinearity**: If predictors are highly correlated with each other, it can cause instability in coefficient estimates and inflate their variance.
+4. **Overfitting/Underfitting**: Linear regression can either overfit (if too many predictors are used) or underfit (if the model is too simple or ignores important variables).
+5. **Assumes Homoscedasticity**: It assumes constant variance of the error terms, which may not hold in some cases, leading to inefficiency in estimates.
+
+In practice, linear regression is often used as a first step or baseline model before moving on to more complex techniques.

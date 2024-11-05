@@ -1,0 +1,62 @@
+import pandas as pd  # For data manipulation
+import numpy as np  # For numerical operations
+from sklearn.model_selection import train_test_split  # For splitting the dataset
+from sklearn.neighbors import KNeighborsClassifier  # KNN classifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score  # For evaluation metrics
+
+# 1. Load the dataset
+df = pd.read_csv('diabetes.csv')  # Replace with your dataset file
+
+# 2. Understand the dataset
+print(df.head())  # Display the first few rows
+print(df['Outcome'].value_counts())  # Show distribution of outcomes (0 = No Diabetes, 1 = Diabetes)
+
+# 3. Define features (X) and target variable (y)
+X = df.drop('Outcome', axis=1)  # Features
+y = df['Outcome']  # Target variable (1 = Diabetes, 0 = No Diabetes)
+
+# 4. Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+
+# 5. Initialize and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)  # Initialize KNN with 5 neighbors
+knn.fit(X_train, y_train)  # Fit the model to the training data
+
+# 6. Make predictions
+y_pred = knn.predict(X_test)  # Predict on the test data
+
+# 7. Evaluate the model
+conf_matrix = confusion_matrix(y_test, y_pred)  # Confusion matrix
+accuracy = accuracy_score(y_test, y_pred)  # Accuracy
+error_rate = 1 - accuracy  # Error rate
+precision = precision_score(y_test, y_pred)  # Precision
+recall = recall_score(y_test, y_pred)  # Recall
+
+# 8. Print the evaluation metrics
+print("Confusion Matrix:\n", conf_matrix)  # Print confusion matrix
+print("Accuracy:", accuracy)  # Print accuracy
+print("Error Rate:", error_rate)  # Print error rate
+print("Precision:", precision)  # Print precision
+print("Recall:", recall)  # Print recall
+
+
+#Theory
+KNN:-
+simple classification and regression classifier
+lazy algo
+takes in 2 params: 1. distance metric (Euclidian dist, Manhattan dist) 2. K
+
+advantages:
+1. easy to implement
+2. few hyper parameters (only 2 params)
+3. adaptable (as new training samples are added, it accounts for any new data)
+
+disadvantges:
+1. low scalability as it stores all training data in memory
+2. curse of dimensionality (as number of dimensions increase, KNN performance decreases as differences distance become less which makes it harder to find meaningful neighbors)
+3. overfitting (lower values of k causes it)
+
+applications:
+1. data preprocessing
+2. finance (stock market forecasting, currency exchange rates)
+3. healthcare (predictions on risks of heart attack and prostate cancer)

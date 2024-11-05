@@ -1,0 +1,88 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import metrics
+
+df.shape
+
+df.isnull().any()
+
+df.columns
+
+df.Prediction.unique()
+
+df['Prediction'] = df['Prediction'].replace({0:'Not spam', 1:'Spam'})
+df
+
+# KNN
+X = df.drop(columns='Prediction',axis=1)
+Y = df['Prediction']
+
+X.columns
+
+Y.head()
+
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size = 0.2)
+
+KN = KNeighborsClassifier
+knn = KN(n_neighbors=7)
+knn.fit(x_train, y_train)
+y_pred = knn.predict(x_test)
+
+print("Prediction:\n")
+print(y_pred)
+
+M = metrics.accuracy_score(y_test, y_pred)
+print("KNN accuracy: ",M)
+
+C = metrics.confusion_matrix(y_test, y_pred)
+print("Confusion matrix:\n",C)
+
+# SVM
+# C is regularization parameter, c = 1 is moderate regularization 
+model = SVC(C=1)
+model.fit(x_train, y_train)
+y_pred = model.predict(x_test)
+
+SVM_acc = metrics.accuracy_score(y_test, y_pred)
+print("SVM accuracy: ",SVM_acc)
+
+SVM_cm = metrics.confusion_matrix(y_test, y_pred)
+print("Confusion matrix:\n",SVM_cm)
+
+
+#Theory
+KNN:- simple classification and regression classifier lazy algo takes in 2 params: 1. distance metric (Euclidian dist, Manhattan dist) 2. K
+
+advantages:
+
+easy to implement
+few hyper parameters (only 2 params)
+adaptable (as new training samples are added, it accounts for any new data)
+disadvantges:
+
+low scalability as it stores all training data in memory
+curse of dimensionality (as number of dimensions increase, KNN performance decreases as differences distance become less which makes it harder to find meaningful neighbors)
+overfitting (lower values of k causes it)
+applications:
+
+data preprocessing
+finance (stock market forecasting, currency exchange rates)
+healthcare (predictions on risks of heart attack and prostate cancer)
+
+SVM:- perform classification by drawing a hyperplane in such a way that points of one category are on either side of the hyperplane
+
+advantages:
+
+easy to understand, implement, use and interpret
+effective when size of training data is small
+disadvantages:-
+
+sometimes points cannot be separated by hyperplane
+applications:
+
+face detection
+email spam filtering
+test recognition
